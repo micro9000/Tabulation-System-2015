@@ -1,0 +1,114 @@
+<?php
+	include '../connection/main_Connection.php';
+
+	$admin = new adminSession();
+	$admin -> login();
+
+	$main = new main();
+	
+	if(!isset($_SESSION['admin_username']) && !isset( $_SESSION['admin_password'])){
+		header("location:index.php");
+	}
+	if(!isset($_SESSION['event_title'])){
+		header("location:new_pageant.php");
+	}
+	$id_admin = $_SESSION['admin_id'];
+	echo "Admin ID: $id_admin";
+
+	$sql_control = new sql_control();
+?>
+<html>
+	<head>
+		<title>Add Pageant</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script type="text/javascript">
+			function rounds(){
+				document.getElementById('rd').innerHTML = "Hello";
+			}
+		</script>
+	</head>
+	<body>
+
+		<table>
+			<tr>
+				<td><h3><a href='index.php'>Logout</a> | </h3></td>
+				<td><h3><a href='adminForm.php'>Home</a> | </h3></td>
+				<td><h3><a href='new_pageant.php'>New Pageant</a> | </h3></td>
+				<td><h3><a href='add_admin.php'>Add Admin</a></h3></td>
+			</tr>
+		</table>
+        
+        <?php
+            echo "Event: <b>" . $_SESSION['event_title'] ."</b></br></br>";
+            
+            if(!($sql_control->getRoundCount($_SESSION['event_id'] > 0)))
+                echo "No rounds added yet.</br></br>";
+            else{
+            	$result = $sql_control->getRounds($_SESSION['event_id']);
+            	$temp = "<select>";
+            	while($row = mysql_fetch_array($result)){
+            		$temp .= "<option>".$row['id']. "|" . $row['round_name'] . "|" . $row['round_no'] . "</option>";
+            	}
+            	$temp .= "</select>";
+            	echo "<form action='addCategory.php>";
+            	echo $temp;            	
+            }
+        ?>
+        
+        
+		<table border='1'>
+			<form action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post'>
+				<tr>
+					<td>
+						<label>Rounds Title</label>
+					</td>
+					<td>
+						<input type='text' name='round_title'>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<label>Round percentage</label>
+					</td>
+					<td>
+						<select name='round_percentage'>
+							<?php
+								for($i = 1; $i <= 100; $i++)
+									echo "<option>$i</option>";
+							?>
+						</select>
+						
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input type='submit' name='btn_add_round' value='Create'>
+					</td>
+					<td>
+						<a href="main_pageant_form.php">Cancel</a>
+					</td>
+				</tr>
+			</form>	
+		</table>
+	</body>
+</html>
+<?php
+	if(isset($_POST['btn_add_round'])){
+		if(!empty($_POST['round_title'])){
+			if($_POST['round_percentage'] != 0){
+				//gets the pageant id
+				$pageant_id = $sql_control -> get_pageant_id($_SESSION['event_title']);
+				//passes the pageant id to the function sql->getRoundCount() to determine the current round then increments it by 1
+				$round_no = $sql_control -> getRoundCount($pageant_id)+1;
+
+				if($main -> add_round($round_no, $_POST['round_title'], $pageant_id, $_POST['round_percentage']) === true){
+					header('location:addRounds.php');
+				}
+			}else{
+				echo "<p style='color:red'>0 percentage is invalid</p>";
+			}
+		}else{
+			echo "<p style='color:red'>Compelete the Form</p>";
+		}
+	}
+?>

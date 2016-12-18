@@ -1,0 +1,258 @@
+<?php
+	//class sql_control
+		//function:
+			//sql_connection()
+			//connection_check() - one paramiter = connection
+			//sql_db()
+			//_database()
+			//_table_Exists() - one paraminter = table
+			//checkFromTable() - three paramiter = tablename, field or column, value that check
+			//insertDataTables()
+			//sql_tables()
+	//class adminSession
+		//function:
+			//selectingAdmin() - two paramiter = username and password
+	//class main
+		//function:
+			//callingAll()
+	
+	class sql_control{
+		
+		//CREATE CONNECTION
+		public function sql_connection(){
+			//declare variable that holds the server name, user, and password
+			$connection = array("server" => "localhost", "user" => "root", "password" => "");
+			//create connection
+			$conn = mysql_connect($connection["server"],$connection["user"], $connection["password"]);
+			//return the conn
+			return $conn;
+		}//end sql_connection function
+		
+		//CHECK THE CONNECTION FUNCTION
+		public function connection_check($connection){
+			if(!$connection){
+				die('Could not connect: '. mysql_error());
+				return false;
+			}else{
+				return true;
+			}
+		}//end connection_check function
+		
+		//CREATE THE DATABASE progDenTabulation
+		public function sql_db(){
+			//Use the conn variable from sql_connection for declaring connection
+			$connection = $this->sql_connection();
+			$checkConn = $this->connection_check($connection);
+			//check connection
+			if($checkConn === true){
+				// Create database progDenTabulationDB
+				$createDB = "CREATE DATABASE IF NOT EXISTS progDenTabulationDB";
+				mysql_query($createDB, $connection) or die(mysql_error());
+			
+				//Close the connection
+				mysql_close($connection);
+			}
+		}//end sql_db function
+		
+		//USE DATABASE progDenTabulationiDB
+		public function _database(){
+			$database = mysql_select_db('progDenTabulationDB') or die(mysql_error());
+			return $database;
+		}
+		//FUNCTION THAT CHECK TABLE IF EXISTING
+		public function _table_Exists($table){
+			$connection = $this->sql_connection(); // create a connection
+			$checkConn = $this->connection_check($connection); // check the connection
+			
+			if($checkConn === true){
+				$this->_database(); // use the database
+				$checkTableQuery = "SHOW TABLES LIKE '".$table."'";
+				$tableResult = mysql_query($checkTableQuery);
+				if (mysql_num_rows($tableResult) == 1){
+					return true;
+				}else{
+					return false;
+					echo "TABLE NOT EXISTS :".die(mysql_error());
+				}//end if
+			}
+			
+		}//end function _table_Exists
+		
+		//FUNTION THAT CHECK THE primary key OR field FROM TABLE unknown
+		//if field or primary key is existing FROM TABLE unknown
+		//if the query return value one then return true
+		//else return false
+		//syntax checkFromTable(table name, field, check value)
+		public function checkFromTable($table_name, $field, $value){
+		
+			$connection = $this->sql_connection(); // create a connection
+			$checkConn = $this->connection_check($connection);//check the connection
+			
+			if($checkConn === true){
+				$this->_database();// use the database
+
+				//FIRST CHECK THE TABLE IF EXISTING
+				if ($this->_table_Exists($table_name) == true){
+					$query = "SELECT * FROM ".$table_name." WHERE ".$field." = '".$value."' LIMIT 1";
+					$result = mysql_query($query, $connection) or die(mysql_error());
+				
+					if(mysql_num_rows($result) == 1){
+						return true;
+					}else{
+						return false;
+					}//end if
+				}//end if
+			}
+		}//end checkFromTable function
+		
+		function sql_tables(){
+			
+			$connection = $this->sql_connection();
+			$checkConn = $this->connection_check($connection);//check the connection
+			if($checkConn === true){
+				$this->_database();
+			
+				//QUERY FOR CREATING admin TABLE
+				$admin_table = "CREATE TABLE IF NOT EXISTS admin(
+									admin_id int NOT NULL AUTO_INCREMENT,
+									user_name VARCHAR(250) NOT NULL,
+									first_name VARCHAR(250) NOT NULL,
+									second_name VARCHAR(250) NOT NULL,
+									middle_name VARCHAR(250) NOT NULL,
+									password VARCHAR(250) NOT NULL,
+									PRIMARY KEY(admin_id)
+								) ENGINE = INNODB";
+				//CREATING TABLE admin
+				mysql_query($admin_table, $connection) or die(mysql_error());
+				mysql_query("ALTER TABLE admin AUTO_INCREMENT=201500");
+			}//end if
+		}//end sql_table function
+		
+		
+		function addAdmin($user_name, $first_name, $second_name, $middle_name, $password){
+
+			$insert_into = "INSERT INTO admin(user_name, first_name, second_name, middle_name, password)";
+			$values = "VALUES('".$user_name."','".$first_name."','".$second_name."','".$middle_name."','".$password."')";
+			$query = $insert_into." ".$values;
+			
+			if($this->checkFromTable('admin','user_name',$user_name) == false){
+				mysql_query($query) or die(mysql_error());
+			}else{
+				echo "<script>alert('EXISTING COLUMN');</script>";
+			}//END IF
+		}//end insertDataTables function
+	}//end class sql_control
+	
+	
+	//admin session class for accessing the database
+	class adminSession{
+		
+		
+		//Get the connection in class sql_control()
+		private function temp_connection(){
+			$sql_cont = new sql_control();
+			return $sql_cont->sql_connection();
+		}//end temp_connection
+		
+		//Get the database function in sql_control()
+		private function temp_database(){
+			$sql_cont = new sql_control();
+			return $sql_cont->_database();
+		}
+		
+		//return true if connection is OK else false
+		private function temp_connection_check($connection){
+			$sql_cont = new sql_control();
+			return $sql_cont -> connection_check($connection);
+		}
+		//function that check if admin username and password is exist in table admin
+		//if exist return true else return false
+							//get two paramiters
+		private function selectAdmin($username,$password){
+			
+			$connection = $this->temp_connection();//connection
+			
+			if(($this->temp_connection_check($connection)) === true){
+				$this -> temp_database();//select the database
+				//select query for admin
+				$selectAdminQuery = "SELECT * FROM admin WHERE user_name = '$username' AND password = '$password' LIMIT 1";
+			
+				$query = mysql_query($selectAdminQuery, $connection) or die(mysql_error());
+				//store the number of rows
+				$row = mysql_num_rows($query);
+				//check if row = 1 then return true else return false
+				if($row == 1){
+					return true;
+				}else{
+					return false;
+				}//end if			
+			}//end if
+		}//end function selectAdmin
+		
+		function login(){
+			session_start(); // starting session
+			if(isset($_POST['btn_login'])){
+				if((!empty($_POST['user_name'])) && (!empty($_POST['ad_password']))){
+					$user_name = $_POST['user_name'];
+					$password = $_POST['ad_password'];
+					// To protect MySQL injection for security purpose
+
+					$adUserName = stripslashes($user_name);
+					$adPass = stripslashes($password);
+
+					$username = mysql_real_escape_string($adUserName);
+					$password = mysql_real_escape_string($adPass);
+				
+				
+					//use the selectAdmin function to check if username and password of admin is exist in table admin
+					$result = $this->selectAdmin($username,$password);
+					if($result == true){
+						$_SESSION['admin_username'] = $username;
+						$_SESSION['admin_password'] = $password;
+						if(!isset($_SESSION['admin_username']) && !isset($_SESSION['admin_password'])){
+							header("location:index.php");
+							die();
+						}else{
+							header("Location:adminForm.php");
+							exit();
+						}
+					}else{
+						echo "<p style='color:red;'>INVALID username and password</p>";
+						exit();
+					}//end if inner second
+				}else{
+					echo "<p style='color:red;'>Complete the form</p>";
+					exit();
+				}//end if inner first
+			}//end if
+		}//end function login
+		
+		
+		//function for destroying session
+		public function sessionDestroy(){
+			session_start();
+			session_destroy();
+		}//end function sessioniDestroy
+		
+	}//end class adminSession
+	
+	class admin{
+		function callingAdmin(){
+			$admin = new adminSession();
+			$admin -> login();
+		}
+	}//end class admin
+	class main{
+		function callingAll(){
+			$sql = new sql_control();
+			$sql -> sql_db();
+			$sql -> sql_tables();
+		}
+		function add_admin($user_name, $first_name, $second_name, $middle_name, $password){
+			$sql = new sql_control();
+			$sql -> addAdmin($user_name, $first_name, $second_name, $middle_name, $password);
+		}
+		
+	}//end class main
+
+?>

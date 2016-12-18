@@ -1,0 +1,74 @@
+<?php
+			
+	include '../connection/main_Connection.php';
+	$admin = new adminSession();
+	$admin -> login();
+	
+	if(!isset($_SESSION['admin_username']) && !isset( $_SESSION['admin_password'])){
+		header("location:index.php");
+	}
+	$main = new main();
+?>
+
+<html>
+	<body>
+		<table>
+			<tr>
+				<td><h3><a href='logout.php'>Logout</a> | </h3></td>
+				<td><h3><a href='adminForm.php'>Home</a> | </h3></td>
+				<td><h3><a href='new_pageant.php'>New Pageant</a> | </h3></td>
+				<td><h3><a href='add_admin.php'>Add Admin</a></h3></td>
+			</tr>
+		</table>
+		<form action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post'>
+			<table border='1'>
+				<tr>
+					<td>Username</td><td><input type='text' name='user_name' maxlength='20' required></td>
+				</tr>
+				<tr>
+					<td>Password</td><td><input type='password' name='password' maxlength='30' required></td>
+				</tr>
+				<tr>
+					<td>Rewrite password</td><td><input type='password' name='conf_password' maxlength='30' required></td>
+				</tr>
+				<tr>
+					<td>First Name</td><td><input type='text' name='first_name' maxlength='30' required></td>
+				</tr>
+				<tr>
+					<td>Last Name</td><td><input type='text' name='last_name' maxlength='30' required></td>
+				</tr>
+				<tr>
+					<td>Designation</td>
+					<td>
+						<select name='designation' required>
+							<option></option>
+							<option>admin</option>
+							<option>Official</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td><input type='submit' name='btn_add_admin' value='ADD'></td>
+				</tr>
+			</table>
+		</form>
+	</body>
+</html>
+<?php
+	if(isset($_POST['btn_add_admin'])){
+		if(!empty($_POST['user_name']) && 
+			!empty($_POST['password']) && 
+			!empty($_POST['conf_password']) && 
+			!empty($_POST['first_name']) && 
+			!empty($_POST['last_name']))
+		{
+			if($_POST['password'] == $_POST['conf_password']){
+				$main -> add_admin($_POST['user_name'], $_POST['password'], $_POST['first_name'], $_POST['last_name'], $_POST['designation']);
+			}else{
+				echo "Invalid Password";
+			}
+		}else{
+			echo "<script>alert('Complete the form')</script>";
+		}
+	}
+?>

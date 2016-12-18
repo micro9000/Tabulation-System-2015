@@ -1,0 +1,10 @@
+.navbar-custom {
+    color: #FFFFFF;
+    background-color: maroon;
+}
+
+.autoSize{
+       width:auto;
+       height:230px;
+       max-height:230px;
+}

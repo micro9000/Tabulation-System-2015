@@ -1,0 +1,99 @@
+<?php
+	include '../connection/main_Connection.php';
+   include '../connection/validation.php';
+	$admin = new adminSession();
+	$admin -> login();
+	
+	if(!isset($_SESSION['admin_username']) && !isset( $_SESSION['admin_password'])){
+		header("location:index.php");
+	}
+	$id_admin = $_SESSION['admin_id'];
+?>
+
+<html>
+	<head>
+		<title>Add Pageant</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	</head>
+	<body>
+
+		<table>
+			<tr>
+				<td><h3><a href='adminForm.php'>Home</a> | </h3></td>
+				<td><h3><a href='new_pageant.php'>New Pageant</a> | </h3></td>
+				<td><h3><a href='add_admin.php'>Add Admin</a></h3></td>
+                <td><h3><a href='logout.php'>Logout</a> | </h3></td>
+			</tr>
+		</table>
+		<h1>New Pageant</h1>
+		<form onsubmit='all_()' action='<?php echo $_SERVER['PHP_SELF']; ?>' method='post'>
+			<table>
+				<tr>
+					<th>Title:</th>
+					<td><input type='text' id='title' name='title' onkeyup="title_()" required="true"/></td>
+                    <td><p id='err_title'></p></td>
+				</tr>
+				
+				<tr>
+					<th>Description:</th>
+					<td>
+						<textarea rows="3" cols="23" id='description' name='description' placeholder="Description of Event or Pageant here" onkeydown="description_()" required></textarea>
+					</td>
+				</tr>
+				<tr>
+					<th>Date:</th>
+                    <!--
+                    <td>
+                        <select name='year'>
+                            <?php //for($i = 2015; $i < 2999; $i++)echo "<option>$i</option>";?>
+                        </select>
+                        <select name="day">
+                            <?php //for($i = 1; $i < 31; $i++ )echo "<option>$i</option>";?>
+                        </select>
+                        <select name="month">
+                            <?php //for($i = 1; $i < 13; $i++)echo "<option>$i</option>";?>
+                        </select>
+                    </td>-->
+					<td><input type='text' id='date' placeholder='yyyy-dd-mm' name='date' onkeyup="date_()" required></td>
+					<td><small>(yyyy-dd-mm)</small></td>
+				</tr>
+				<tr>
+					<th>Time:</th>
+					<td><input type='text' id='_time' placeholder='(eg. 19:38 or 7:38pm)' name='time' onkeyup="time_()" required></td>
+					<td><small>(eg. 19:38 or 7:38pm)</small></td>
+				</tr>
+				<tr>
+					<th>Venue:</th>
+					<td><textarea rows="2" cols="23" id='venue' name='venue' placeholder="Event or Pageant venue here" onkeyup="venue_()" required></textarea></td>
+				</tr>
+				<tr>
+
+					<td colspan='3' align="center"><input type='submit' value="Create" name='btn_addEvent' id='btn_addEvent' onclick="date_time()"></td>
+				</tr>
+				<tr>
+					<td colspan="3"><p id="err_msg"></p></td>
+				</tr>
+			</table>
+		</form>
+		<!-- <script type="text/javascript" src="js/date_time.js"></script> -->
+	</body>
+</html>
+
+<?php
+	$main = new main();
+	$valid = new validation_form();
+	if(isset($_POST['btn_addEvent'])){
+        //date = $_POST['year'] . '-' . $_POST['day'] . '-' . $_POST['month'];
+		if(($valid -> checkDate($_POST['date']) === true) || !empty($_POST['title']) && !empty($_POST['description']) && !empty($_POST['time']) && !empty($_POST['venue'])){
+            if($valid -> checkTime($_POST['time'])){
+                if($main -> add_new_pageant($_POST['title'], $_POST['description'], $_POST['date'], $_POST['time'], $_POST['venue'], $id_admin)){
+					header('location:adminForm.php');
+				}
+			}
+		}else{
+			echo "<p style='color:red'>Please complete the form to proceed.</p>";
+        }
+	}else{
+		return false;
+    }
+?>

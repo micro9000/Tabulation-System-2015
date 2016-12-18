@@ -1,0 +1,42 @@
+<?php
+   include '../connection/main_Connection.php';
+	$admin = new adminSession();
+	$admin -> login();
+	unset($_SESSION['event_id'],$_SESSION['round_id'],$_SESSION['category_id']);
+?>
+<html>
+    <head>
+        <title>Events</title>
+    </head>
+	<body>
+		<table>
+			<tr>
+				
+				<td><h3><a href='new_pageant.php'>New Pageant</a> | </h3></td>
+				<td><h3><a href='add_admin.php'>Add Admin</a> | </h3></td>
+                
+	</body>
+</html>
+<?php
+	
+	if(isset($_SESSION['admin_username']) && isset( $_SESSION['admin_password'])){
+		echo "<td><h3> User: ".$_SESSION['admin_username']. " <a href='logout.php'>Logout</a></h3></td><tr><table>";
+    	//echo "Admin: <b>" . $_SESSION['admin_username'] ."</b><br/>";
+    	//echo "ID: <b>" . $_SESSION['admin_id']."</b><br/>";
+    	$sql = new sql_control();
+    	echo "<h3>Event List: </h3>";
+        if($sql->getEventCount() > 0){
+            echo "<form action='main_pageant_form.php' method='post'>";
+        	$result = $sql->getEvents();
+        	echo "<select name='event_id'>";
+        	while($row = mysql_fetch_array($result))
+                echo 	"<option>". $sql ->get_pageant_id($row['title']) ."|".$row['title'] . "</option>";
+        	echo "</select>";
+        	echo "<input type='submit' name='btn_view_event' value='View'>";
+            echo "</form>";
+         }else
+            echo "There are no events yet. Do you want to <a href='new_pageant.php'>add one</a>?";
+    }else
+        header("location:index.php");
+?>
+

@@ -1,0 +1,242 @@
+<?php
+	
+	class sql_control{
+
+
+		//CREATE CONNECTION
+		public function sql_connection(){
+			//declare variable that holds the server name, user, and password
+			$connection = array("server" => "localhost", "user" => "root", "password" => "");
+			//create connection
+			$conn = mysql_connect($connection["server"],$connection["user"], $connection["password"]);
+			//return the conn
+			return $conn;
+		}//end sql_connection function
+	/*
+		public function sql_connection($server, $dbuser, $dbpassword){
+			$con_string = array("server"=>$server, "user"=>$dbuser,"password"=>$dbpassword);
+ 
+        	$connection = mysql_connect($con_string["server"], $con_string["user"], $con_string['password']);
+        
+        	return $connection;
+		}
+	*/
+		//CHECK THE CONNECTION FUNCTION
+		public function connection_check($connection){
+			if(!$connection){
+				die('Could not connect: '. mysql_error());
+				return false;
+			}else{
+				return true;
+			}
+		}//end connection_check function
+
+		
+		//USE DATABASE progDenTabulationiDB
+		public function _database(){
+			$database = mysql_select_db('prog_den_tabulation') or die(mysql_error());
+			return $database;
+		}
+		//FUNCTION THAT CHECK TABLE IF EXISTING
+		public function _table_Exists($table){
+			$connection = $this->sql_connection(); // create a connection
+			$checkConn = $this->connection_check($connection); // check the connection
+			
+			if($checkConn === true){
+				$this->_database(); // use the database
+				$checkTableQuery = "SHOW TABLES LIKE '".$table."'";
+				$tableResult = mysql_query($checkTableQuery);
+				if (mysql_num_rows($tableResult) == 1){
+					return true;
+				}else{
+					return false;
+					echo "TABLE NOT EXISTS :".die(mysql_error() . "Line 54");
+				}//end if
+			}
+			
+		}//end function _table_Exists
+		
+		//FUNTION THAT CHECK THE primary key OR field FROM TABLE unknown
+		//if field or primary key is existing FROM TABLE unknown
+		//if the query return value one then return true
+		//else return false
+		//syntax checkFromTable(table name, field or column, check value)
+		public function checkFromTable($table_name, $field, $value){
+		
+			$connection = $this->sql_connection(); // create a connection
+			$checkConn = $this->connection_check($connection);//check the connection
+			
+			if($checkConn === true){
+				$this->_database();// use the database
+
+				//FIRST CHECK THE TABLE IF EXISTING
+				if ($this->_table_Exists($table_name) == true){
+					$query = "SELECT * FROM ".$table_name." WHERE ".$field." = '".$value."' LIMIT 1";
+					$result = mysql_query($query, $connection) or die(mysql_error() . "Line 76");
+				
+					if(mysql_num_rows($result) == 1){
+						return true;
+					}else{
+						return false;
+					}//end if
+				}//end if
+			}
+		}//end checkFromTable function
+		
+		
+		function addAdmin($user_name, $password, $fname, $lname, $designation){
+
+			$_user_name = stripslashes($user_name);
+			$_first_name = stripslashes($password);
+			$_second_name = stripslashes($fname);
+			$_middle_name = stripslashes($lname);
+			$_password = stripslashes($designation);
+
+			$username = mysql_real_escape_string($_user_name);
+			$firstname = mysql_real_escape_string($_first_name);
+			$secondname = mysql_real_escape_string($_second_name);
+			$middlename = mysql_real_escape_string($_middle_name);
+			$a_password = mysql_real_escape_string($_password);
+
+			$connection = $this->sql_connection(); // create a connection
+
+			$insert_into = "INSERT INTO admin(username, password, fname, lname, designation)";
+			$values = "VALUES('".$username."','".$password."','".$fname."','".$lname."','".$designation."')";
+			$query = $insert_into." ".$values;
+			
+			if($this->checkFromTable('admin','username',$username) == false){
+				mysql_query($query, $connection) or die(mysql_error() . "Line 109");
+			}else{
+				echo "<script>alert('EXISTING COLUMN');</script>";
+			}//END IF
+		}//end addAdmin function
+
+		function addEvent($title, $description, $date, $time, $venue,$admin_id){
+
+			$_title = stripslashes($title);
+			$_description =stripslashes($description);
+			$_date = stripslashes($date);
+			$_time = stripslashes($time);
+			$_venue = stripslashes($venue);
+
+			$__title = mysql_real_escape_string($_title);
+			$__description = mysql_real_escape_string($_description);
+			$__date = mysql_real_escape_string($_date);
+			$__time = mysql_real_escape_string($_time);
+			$__venue = mysql_real_escape_string($_venue);
+
+			$connection = $this->sql_connection(); // create a connection
+
+			$insert_into_p = "INSERT INTO event(title, description, date, time, venue, user_id)";
+			$values_p = "VALUES('".$title."','".$description."','".$date."','".$time."','".$venue."',".$admin_id.")";
+			$query_p = $insert_into_p." ".$values_p;
+
+			if($this->checkFromTable('event','title',$title) == false){
+				mysql_query($query_p, $connection) or die (mysql_error() . "Line 136");
+				return true;
+			}else{
+				echo "<script>alert('The title of the event is already used!')</script>";
+				return false;
+			}//END IF
+		}//end addPageant
+
+		function addRounds($roundNum, $roundTitle, $event_id ,$roundPercent){
+			$round_no = stripslashes($roundNum);
+			$round_title = stripslashes($roundTitle);
+			$round_percent = stripslashes($roundPercent);
+
+			$_round_no = mysql_real_escape_string($round_no);
+			$_round_title = mysql_real_escape_string($roundTitle);
+			$_round_percent = mysql_real_escape_string($round_percent);
+
+			$connection = $this -> sql_connection();// create a conenction
+
+			$insert_into_rounds = "INSERT INTO round(round_no, round_name, event_id, percentage)";
+			$values_rounds = "VALUES(".$_round_no.",'".$_round_title."',".$event_id.",".$_round_percent.")";
+
+			$query = $insert_into_rounds." ".$values_rounds;
+
+			if($this -> checkFromTable('round', 'round_name', $_round_title) == false){
+				mysql_query($query, $connection) or die (mysql_error() . "Line 161");
+				return true;
+			}else{
+				echo "<script>alert('Round Title already used')</script>";
+				return false;
+			}
+
+		}
+		//function that get the event_pageant_id from table event
+			/*public function select_pageantId($event_title){
+				$connection = $this->sql_connection(); // create a connection
+				if(($this -> connection_check($connection)) === true){
+					$this -> _database();//select the database
+					$query = "SELECT id FROM event WHERE title ='".$event_title."' LIMIT 1";
+					$result = mysql_query($query, $connection) or die(mysql_error() . "Line 175");
+					$row = mysql_fetch_array($result);
+					return $row['id'];
+				}
+			}*/
+            
+        function get_pageant_id($event_title){
+            $connection = $this->sql_connection(); // create a connection
+            if(($this -> connection_check($connection)) === true){
+                $this -> _database();//select the database
+				$query = "SELECT id FROM event WHERE title ='".$event_title."' LIMIT 1";
+				$result = mysql_query($query, $connection) or die(mysql_error() . "Line 175");
+				$row = mysql_fetch_array($result);
+                return $row['id'];
+			}
+        }
+		function getRoundCount($event_id){
+			$connection = $this->sql_connection(); // create a connection
+
+			if(($this -> connection_check($connection) === true)){
+				$this -> _database();//select the database
+					$query = "SELECT COUNT(round_no) AS count FROM round WHERE event_id = $event_id";
+					$result = mysql_query($query, $connection) or die(mysql_error() . "Line 186");
+					$count = mysql_fetch_array($result);
+					return $count['count'];
+			}
+		}
+		
+		function getRounds($event_id){
+			$connection = $this->sql_connection(); // create a connection
+
+			if(($this -> connection_check($connection) === true)){
+				$this -> _database();//select the database
+					$query = "SELECT * FROM round WHERE event_id = $event_id";
+					$result = mysql_query($query, $connection) or die(mysql_error() . "Line 208");
+					$row = mysql_fetch_array($result);
+					return $row;
+			}
+		}
+
+		function getEvents(){
+			$connection = $this->sql_connection();
+			if(($this -> connection_check($connection) === true)){
+				$this -> _database();//select the database
+					$query = "SELECT * FROM event";
+					$result = mysql_query($query, $connection) or die(mysql_error() . "Line 16");
+					
+					return $result;
+			}
+		}
+        
+        
+        function getEventCount(){
+            $connection = $this->sql_connection();
+            if(($this -> connection_check($connection) === true)){
+                $this -> _database();//select the database
+                $query = "SELECT COUNT(id) AS id FROM event";
+                $result = mysql_query($query, $connection) or die(mysql_error() . "Line 208");
+                $row = mysql_fetch_array($result);
+                return $row['id'];
+            }
+        }
+        
+        
+	}//end class sql_control
+    
+
+
+?>
